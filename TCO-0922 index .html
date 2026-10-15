@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TCO利润模拟器 · 科技版</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<style>
+  * { box-sizing: border-box; font-family: 'Microsoft YaHei', -apple-system, sans-serif; }
+  body {
+    background: radial-gradient(ellipse at top, #0f2342 0%, #0a1628 50%, #060e1c 100%), repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(0,212,255,0.02) 40px, rgba(0,212,255,0.02) 41px);
+    background-attachment: fixed;
+    padding: 18px; margin: 0; min-height: 100vh;
+    color: #e8f0ff;
+  }
+  .app-wrap { max-width: 1500px; margin: 0 auto; }
+
+  .tabs { display: flex; gap: 10px; margin-bottom: 18px; border-bottom: 1px solid rgba(0, 212, 255, 0.12); }
+  .tab-btn {
+    border: 1px solid rgba(0, 212, 255, 0.15); border-bottom: none;
+    background: rgba(255,255,255,0.03); padding: 12px 28px;
+    font-size: 14px; font-weight: 700; color: #6a8ab5; cursor: pointer;
+    border-radius: 12px 12px 0 0; transition: all 0.25s;
+  }
+  .tab-btn:hover { color: #00d4ff; background: rgba(0,212,255,0.08); }
+  .tab-btn.active {
+    background: linear-gradient(180deg, rgba(0,212,255,0.12) 0%, rgba(0,212,255,0.03) 100%);
+    color: #00d4ff; border-color: rgba(0,212,255,0.4);
+    box-shadow: 0 -2px 20px rgba(0,212,255,0.15), inset 0 1px 0 rgba(0,212,255,0.3);
+    text-shadow: 0 0 12px rgba(0,212,255,0.5);
+  }
+  .tab-page { display: none; }
+  .tab-page.active { display: block; }
+
+  .page-header {
+    background: linear-gradient(135deg, rgba(0,212,255,0.1) 0%, rgba(43,124,255,0.06) 100%);
+    border: 1px solid rgba(0,212,255,0.18); border-radius: 16px;
+    padding: 18px 24px 14px; margin-bottom: 16px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 0 40px rgba(0,212,255,0.12), inset 0 1px 0 rgba(0,212,255,0.2);
+  }
+  .page-header h1 {
+    font-size: 21px; color: #e8f0ff; margin: 0 0 6px;
+    display: flex; align-items: center; gap: 10px; letter-spacing: 0.5px;
+  }
+  .page-header .sub { font-size: 12px; color: #6a8ab5; margin-left: 2px; }
+
+  .main-layout { display: grid; grid-template-columns: 28fr 72fr; gap: 18px; align-items: start; }
+
+  .card {
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 16px; border: 1px solid rgba(0, 212, 255, 0.18);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(0,212,255,0.15), inset 0 -1px 0 rgba(0,212,255,0.05);
+    padding: 16px 20px; margin-bottom: 16px;
+  }
+  .card:last-child { margin-bottom: 0; }
+
+  .left-col { position: sticky; top: 14px; }
+
+  .group-title {
+    font-size: 14px; font-weight: 700; color: #c8d8f0;
+    margin: 26px 0 12px 2px;
+    display: flex; justify-content: space-between; align-items: center; letter-spacing: 0.5px;
+  }
+  .group-title:first-child { margin-top: 0; }
+  .group-title.compact { margin-top: 0; }
+  .group-subtitle { font-size: 11px; color: #6a8ab5; font-weight: 500; margin-left: 6px; letter-spacing: 0.2px; }
+
+  .group-reset {
+    font-size: 11px; color: #4a6a95;
+    text-decoration: underline; cursor: pointer; font-weight: 500; transition: 0.2s;
+  }
+  .group-reset:hover { color: #00d4ff; }
+
+  .drive-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 4px; }
+  .drive-btn {
+    padding: 9px 0; border-radius: 10px;
+    border: 1.5px solid rgba(0, 212, 255, 0.25);
+    background: rgba(0, 212, 255, 0.04); color: #7a9ac5;
+    font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.25s;
+  }
+  .drive-btn:hover { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0 12px rgba(0,212,255,0.2); }
+  .drive-btn.active {
+    background: linear-gradient(135deg, #00d4ff 0%, #2b7cff 100%);
+    border-color: #00d4ff; color: #fff;
+    box-shadow: 0 0 24px rgba(0,212,255,0.6), 0 0 8px rgba(0,212,255,0.3);
+  }
+
+  .slider-item { margin-bottom: 11px; }
+  .slider-item:last-child { margin-bottom: 0; }
+  .slider-label {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 13.5px; color: #ffffff; font-weight: 700; margin-bottom: 5px;
+  }
+  .slider-label .val {
+    color: #00d4ff; font-weight: 700;
+    background: rgba(0, 212, 255, 0.1);
+    border: 1px solid rgba(0, 212, 255, 0.2);
+    padding: 2px 10px; border-radius: 8px; font-size: 13px;
+    box-shadow: 0 0 10px rgba(0,212,255,0.15);
+  }
+  input[type=range] {
+    width: 100%; height: 5px; -webkit-appearance: none;
+    background: linear-gradient(90deg, rgba(0,212,255,0.3), rgba(43,124,255,0.3));
+    border-radius: 10px; outline: none; cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 16px; height: 16px;
+    background: #fff; border: 3px solid #00d4ff; border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 16px rgba(0,212,255,0.9), 0 0 4px rgba(255,255,255,0.5) inset;
+    transition: 0.15s;
+  }
+  input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); box-shadow: 0 0 18px rgba(0,212,255,0.9); }
+
+  .marginal-contribution {
+    margin-top: 16px; padding: 10px 12px;
+    background: rgba(0, 212, 255, 0.05);
+    border: 1px dashed rgba(0, 212, 255, 0.28);
+    border-radius: 10px;
+    font-size: 11.5px; color: #b8cce0; line-height: 1.9; letter-spacing: 0.2px;
+    position: relative;
+  }
+  .marginal-contribution .mc-header {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 6px; position: relative;
+    flex-wrap: nowrap; min-height: 24px;
+  }
+  .marginal-contribution .mc-title {
+    color: #00d4ff; font-weight: 700; font-size: 12px;
+    line-height: 24px; height: 24px;
+    display: inline-flex; align-items: center; flex-shrink: 0;
+  }
+  .marginal-contribution .mc-formula {
+    margin-left: auto; font-size: 10px; color: #6a8ab5;
+    font-weight: 500; letter-spacing: 0.2px;
+    white-space: nowrap; line-height: 24px; height: 24px;
+    display: inline-flex; align-items: center; flex-shrink: 0;
+  }
+  .mc-brand-btn {
+    background: rgba(0, 212, 255, 0.12);
+    border: 1px solid rgba(0, 212, 255, 0.35);
+    color: #00d4ff;
+    height: 24px; padding: 0 10px; border-radius: 6px;
+    font-size: 11.5px; font-weight: 700; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 4px;
+    transition: all 0.2s; font-family: inherit;
+    line-height: 1; box-sizing: border-box; flex-shrink: 0;
+  }
+  .mc-brand-btn:hover { background: rgba(0, 212, 255, 0.22); border-color: #00d4ff; box-shadow: 0 0 12px rgba(0,212,255,0.3); }
+  .mc-brand-btn::after { content: '▾'; font-size: 10px; transition: transform 0.2s; }
+  .mc-brand-btn.open::after { transform: rotate(180deg); }
+  .mc-brand-dropdown {
+    position: absolute; bottom: 100%; left: 56px;
+    margin-bottom: 6px; margin-top: 0;
+    background: linear-gradient(180deg, #0f2342 0%, #0a1628 100%);
+    border: 1px solid rgba(0, 212, 255, 0.4);
+    border-radius: 10px; padding: 5px;
+    display: none; z-index: 100;
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.6), 0 0 24px rgba(0, 212, 255, 0.2);
+    min-width: 110px;
+  }
+  .mc-brand-dropdown.open { display: block; }
+  .mc-brand-option {
+    padding: 7px 14px; border-radius: 7px;
+    font-size: 12px; color: #c8d8f0; cursor: pointer;
+    transition: all 0.15s; font-weight: 600; white-space: nowrap;
+  }
+  .mc-brand-option:hover { background: rgba(0, 212, 255, 0.15); color: #00d4ff; }
+  .mc-brand-option.active {
+    background: rgba(0, 212, 255, 0.22); color: #00d4ff;
+    font-weight: 800; box-shadow: inset 0 0 0 1px rgba(0, 212, 255, 0.4);
+  }
+  .marginal-contribution .mc-body { line-height: 1.9; color: #b8cce0; }
+  .marginal-contribution .highlight { color: #00ff88; font-weight: 700; margin: 0 1px; }
+  .marginal-contribution .sep { color: rgba(0, 212, 255, 0.35); margin: 0 6px; }
+
+  .cost-inputs { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px 12px; }
+  .cost-inputs.brands-3col { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px 10px; }
+  .cost-input-item { display: flex; align-items: center; gap: 6px; }
+  .cost-input-item .name {
+    font-size: 13.5px; color: #ffffff; font-weight: 700;
+    flex-shrink: 0; min-width: 30px;
+  }
+  .cost-input-item .field {
+    flex: 1; display: flex; align-items: center;
+    background: rgba(0, 212, 255, 0.06);
+    border: 1px solid rgba(0, 212, 255, 0.25);
+    border-radius: 8px; padding: 5px 8px;
+    transition: all 0.2s; min-width: 0;
+  }
+  .cost-input-item .field:focus-within {
+    border-color: #00d4ff;
+    box-shadow: 0 0 18px rgba(0, 212, 255, 0.45);
+    background: rgba(0, 212, 255, 0.1);
+  }
+  .cost-input-item input[type=number] {
+    flex: 1; background: transparent; border: none;
+    color: #00d4ff; font-size: 13.5px; font-weight: 700;
+    outline: none; text-align: right; width: 100%; min-width: 0;
+    font-family: inherit; padding: 0; -moz-appearance: textfield;
+  }
+  .cost-input-item input[type=number]::-webkit-outer-spin-button,
+  .cost-input-item input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .cost-input-item .unit { font-size: 11.5px; color: #6a8ab5; margin-left: 4px; flex-shrink: 0; }
+
+  .grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; }
+
+  .footer-hint {
+    color: #4a6a95; font-size: 11px;
+    padding: 12px 4px 2px;
+    border-top: 1px dashed rgba(0, 212, 255, 0.12);
+    margin-top: 14px; text-align: center;
+  }
+
+  .right-col { min-width: 0; }
+  .card-title { font-size: 16px; font-weight: 700; color: #e8f0ff; letter-spacing: 0.5px; margin: 0 0 8px; }
+  .chart-box { width: 100%; height: 300px; }
+  .chart-box-sm { width: 100%; height: 270px; }
+
+  .summary-highlight-wrap { display: flex; margin-bottom: 10px; }
+  .summary-highlight {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 22px; font-weight: 800; color: #00ff88;
+    background: rgba(0, 255, 136, 0.08); padding: 10px 20px;
+    border-radius: 14px; border: 1.5px solid rgba(0, 255, 136, 0.45);
+    box-shadow: 0 0 24px rgba(0, 255, 136, 0.25), inset 0 0 20px rgba(0, 255, 136, 0.08);
+    letter-spacing: 0.3px;
+  }
+  .summary-highlight b {
+    font-size: 22px; color: #00ff88; margin: 0 4px;
+    text-shadow: 0 0 16px rgba(0, 255, 136, 0.8), 0 0 40px rgba(0, 255, 136, 0.4);
+  }
+
+  .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 6px 0 10px; }
+  .summary-card {
+    background: linear-gradient(135deg, rgba(0,212,255,0.1) 0%, rgba(43,124,255,0.06) 100%);
+    border: 1.5px solid rgba(0, 212, 255, 0.25);
+    border-radius: 12px; padding: 20px 14px;
+    display: flex; flex-direction: column; gap: 5px; align-items: center; text-align: center;
+    transition: all 0.25s;
+  }
+  .summary-card:hover {
+    border-color: rgba(0, 212, 255, 0.6);
+    box-shadow: 0 0 20px rgba(0,212,255,0.2);
+    transform: translateY(-2px);
+  }
+  .summary-card .name { font-size: 19px; font-weight: 800; color: #fff; text-shadow: 0 0 12px rgba(0,212,255,0.5); }
+  .summary-card .amount { font-size: 14px; font-weight: 700; color: #8aa5cc; }
+  .summary-card .result { font-size: 20px; font-weight: 800; color: #00d4ff; text-shadow: 0 0 14px rgba(0,212,255,0.6); }
+  .summary-card .amount.green { color: #00ff88; }
+  .summary-card .result.green { color: #00ff88; text-shadow: 0 0 10px rgba(0,255,136,0.4); }
+  .summary-card.green-card .result {
+    color: #00ff88;
+    text-shadow: 0 0 16px rgba(0,255,136,0.8), 0 0 32px rgba(0,255,136,0.4);
+  }
+
+  .summary-note {
+    color: #6a8ab5; font-size: 11px; text-align: center;
+    padding: 10px 0 2px;
+    border-top: 1px dashed rgba(0, 212, 255, 0.12);
+    margin-top: 8px; line-height: 1.8;
+  }
+  .summary-note .note-formula { color: #8aa5cc; font-weight: 500; font-size: 11px; }
+  .summary-note .note-plain {
+    color: #a8c0e0; font-size: 11.5px; font-weight: 600;
+    margin-top: 4px; display: block;
+  }
+  .summary-note .note-plain b { color: #00d4ff; font-weight: 800; margin: 0 2px; }
+  .summary-note .note-plain .green { color: #00ff88; font-weight: 800; }
+
+  @media (max-width: 1000px) {
+    .main-layout { grid-template-columns: 1fr; }
+    .left-col { position: static; }
+    .summary-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app-wrap">
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="p1">🚛 不同能源类型头挂列车TCO测算</button>
+    <button class="tab-btn" data-tab="p2">🏷️ 不同品牌头挂列车TCO测算</button>
+  </div>
+
+  <!-- ==================== 第 1 页 ==================== -->
+  <div class="tab-page active" id="tab-p1">
+
+    <div class="page-header">
+      <h1>不同能源类型头挂列车TCO测算</h1>
+      <div class="sub">拖动滑块&amp;填入数字实时计算 | 基准工况：年跑 10 万 km ｜ 运价 0.16 元/吨·km ｜ 自重损耗 1.8 吨 ｜ 电耗 120 kWh/百公里 ｜ 电价 0.8 元/度</div>
+    </div>
+
+    <div class="main-layout">
+      <div class="left-col">
+        <div class="card">
+          <div class="group-title compact">车型选择</div>
+          <div class="drive-btns">
+            <button class="drive-btn active" id="eBtn4x2">4×2</button>
+            <button class="drive-btn" id="eBtn6x4">6×4</button>
+          </div>
+
+          <div class="group-title">核心参数</div>
+          <div class="slider-item">
+            <div class="slider-label"><span>年运营里程</span><span class="val" id="eMileageVal">10.0 万公里</span></div>
+            <input type="range" id="eMileage" min="5" max="20" step="0.1" value="10">
+          </div>
+          <div class="slider-item">
+            <div class="slider-label"><span>吨公里运价</span><span class="val" id="ePriceVal">0.160 元</span></div>
+            <input type="range" id="ePrice" min="0.10" max="0.30" step="0.005" value="0.16">
+          </div>
+          <div class="slider-item">
+            <div class="slider-label"><span>自重损耗</span><span class="val" id="eWeightVal">1.8 吨</span></div>
+            <input type="range" id="eWeight" min="0" max="3" step="0.1" value="1.8">
+          </div>
+          <div class="slider-item">
+            <div class="slider-label"><span>百公里电耗</span><span class="val" id="eEconVal">120 kWh</span></div>
+            <input type="range" id="eEcon" min="80" max="200" step="1" value="120">
+          </div>
+          <div class="slider-item">
+            <div class="slider-label"><span>电价</span><span class="val" id="eElecVal">0.80 元/度</span></div>
+            <input type="range" id="eElec" min="0.30" max="1.50" step="0.05" value="0.80">
+          </div>
+
+          <div class="group-title">
+            <span>购车成本<span class="group-subtitle">（该成本为"头+挂"列车购车成本）</span></span>
+            <span class="group-reset" id="eResetCost">恢复默认</span>
+          </div>
+          <div class="cost-inputs">
+            <div class="cost-input-item">
+              <span class="name">燃油</span>
+              <div class="field">
+                <input type="number" id="eCostFuel" value="29.4" step="0.1" min="15" max="60">
+                <span class="unit">万</span>
+              </div>
+            </div>
+            <div class="cost-input-item">
+              <span class="name">天然气</span>
+              <div class="field">
+                <input type="number" id="eCostGas" value="39.3" step="0.1" min="18" max="72">
+                <span class="unit">万</span>
+              </div>
+            </div>
+            <div class="cost-input-item">
+              <span class="name">换电</span>
+              <div class="field">
+                <input type="number" id="eCostSwap" value="27.3" step="0.1" min="10" max="42">
+                <span class="unit">万</span>
+              </div>
+            </div>
+            <div class="cost-input-item">
+              <span class="name">充电</span>
+              <div class="field">
+                <input type="number" id="eCostCharge" value="48.3" step="0.1" min="25" max="98">
+                <span class="unit">万</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="group-title">
+            <span>其他费用</span>
+            <span class="group-reset" id="eResetFee">恢复默认</span>
+          </div>
+          <div class="grid-2col">
+            <div class="slider-item">
+              <div class="slider-label"><span>司机工资</span><span class="val" id="eDriverVal">12.0万</span></div>
+              <input type="range" id="eDriver" min="10" max="18" step="0.5" value="12">
+            </div>
+            <div class="slider-item">
+              <div class="slider-label"><span>保养维修</span><span class="val" id="eMaintVal">0.50万</span></div>
+              <input type="range" id="eMaint" min="0.10" max="2.00" step="0.05" value="0.50">
+            </div>
+            <div class="slider-item">
+              <div class="slider-label"><span>轮胎</span><span class="val" id="eTireVal">3.00万</span></div>
+              <input type="range" id="eTire" min="1.00" max="4.00" step="0.10" value="3.00">
+            </div>
+            <div class="slider-item">
+              <div class="slider-label"><span>保险</span><span class="val" id="eInsVal">2.50万</span></div>
+              <input type="range" id="eIns" min="1.00" max="4.00" step="0.10" value="2.50">
+            </div>
+            <div class="slider-item">
+              <div class="slider-label"><span>尿素(燃油)</span><span class="val" id="eUreaVal">0.50万</span></div>
+              <input type="range" id="eUrea" min="0" max="2.00" step="0.05" value="0.50">
+            </div>
+            <div class="slider-item">
+              <div class="slider-label"><span>罚款/过路费</span><span class="val" id="eOtherVal">0.10万</span></div>
+              <input type="range" id="eOther" min="0" max="1.00" step="0.05" value="0.10">
+            </div>
+          </div>
+
+          <div class="marginal-contribution">
+            <div class="mc-header">
+              <span class="mc-title">边际贡献（充电车）</span>
+              <span class="mc-formula">边际贡献% = Δ利润 ÷ 该品牌自身年利润 × 100%</span>
+            </div>
+            <div class="mc-body" id="eMarginal"></div>
+          </div>
+
+          <div class="footer-hint">以上费用均按年度计算，计入年运营成本</div>
+        </div>
+      </div>
+
+      <div class="right-col">
+        <div class="card">
+          <h3 class="card-title">📈 不同能源类型 · 年净收益对比</h3>
+          <div id="eChartProfit" class="chart-box"></div>
+        </div>
+
+        <div class="card">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <h3 class="card-title" style="margin:0;">💰 差额回本周期速览（vs 燃油）</h3>
+            <span class="summary-highlight" id="eChargeHighlight"></span>
+          </div>
+          <div class="summary-grid" id="eSummaryGrid"></div>
+          <div class="summary-note">
+            <div class="note-formula">💡 差额回本周期 = (车型成本 − 燃油成本) / (车型利润 − 燃油利润)</div>
+            <span class="note-plain">📌 差额回本周期理解：<b>比买油车多花的购车钱 / 每年比油车多赚的净利润</b> = 回本所需的年数</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 class="card-title">⏱️ 不同能源类型 · 差额回本周期（vs 燃油）</h3>
+          <div id="eChartPayback" class="chart-box-sm"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 第 2 页 ==================== -->
+  <div class="tab-page" id="tab-p2">
+
+    <div class="page-header">
+      <h1>不同品牌头挂列车TCO测算</h1>
+      <div class="sub">拖动滑块&amp;填入数字实时计算 | 基准工况：年跑 10 万 km ｜ 运价 0.16 元/吨·km ｜ 电价 0.8 元/度 ｜ 差额回本周期以燃油车为基准</div>
+    </div>
+
+    <div class="main-layout">
+      <div class="left-col">
+        <div class="card">
+          <div class="group-title compact">车型选择</div>
+          <div class="drive-btns">
+            <button class="drive-btn active" id="bBtn4x2">4×2</button>
+            <button class="drive-btn" id="bBtn6x4">6×4</button>
+          </div>
+
+          <div class="group-title">核心参数</div>
+          <div class="slider-item">
+            <div class="slider-label"><span>年运营里程</span><span class="val" id="bMileageVal">10.0 万公里</span></div>
+            <input type="range" id="bMileage" min="5" max="20" step="0.1" value="10">
+          </div>
+          <div class="slider-item">
+            <div class="slider-label"><span>吨公里运价</span><span class="val" id="bPriceVal">0.160 元</span></div>
+            <input type="range" id="bPrice" min="0.10" max="0.30" step="0.005" value="0.16">
+          </div>
+          <div class="slider-item">
+            <div class="slider-label"><span>自重损耗</span><span class="val" id="bWeightVal">1.8 吨</span></div>
+            <input type="range" id="bWeight" min="0" max="3" step="0.1" value="1.8">
+          </div>
+          <div class="slider-item">
+            <div class="slider-label"><span>百公里电耗</span><span class="val" id="bEconVal">120 kWh</span></div>
+            <input type="range" id="bEcon" min="80" max="200" step="1" value="120">
+          </div>
+          <div class="slider-item">
+            <div class="slider-label"><span>电价</span><span class="val" id="bElecVal">0.80 元/度</span></div>
+            <input type="range" id="bElec" min="0.30" max="1.50" step="0.05" value="0.80">
+          </div>
+
+          <div class="group-title">
+            <span>购车成本<span class="group-subtitle">（该成本为"头+挂"列车购车成本）</span></span>
+            <span class="group-reset" id="bResetCost">恢复默认</span>
+          </div>
+          <div class="cost-inputs brands-3col">
+            <div class="cost-input-item">
+              <span class="name">小满</span>
+              <div class="field">
+                <input type="number" id="bCostXm" value="47.3" step="0.1" min="30" max="80">
+                <span class="unit">万</span>
+              </div>
+            </div>
+            <div class="cost-input-item">
+              <span class="name">零一</span>
+              <div class="field">
+                <input type="number" id="bCostLy" value="47.3" step="0.1" min="30" max="80">
+                <span class="unit">万</span>
+              </div>
+            </div>
+            <div class="cost-input-item">
+              <span class="name">解放</span>
+              <div class="field">
+                <input type="number" id="bCostJf" value="52.5" step="0.1" min="35" max="85">
+                <span class="unit">万</span>
+              </div>
+            </div>
+            <div class="cost-input-item">
+              <span class="name">陕汽</span>
+              <div class="field">
+                <input type="number" id="bCostSq" value="52.5" step="0.1" min="35" max="85">
+                <span class="unit">万</span>
+              </div>
+            </div>
+            <div class="cost-input-item">
+              <span class="name">重汽</span>
+              <div class="field">
+                <input type="number" id="bCostZq" value="50.4" step="0.1" min="35" max="85">
+                <span class="unit">万</span>
+              </div>
+            </div>
+            <div class="cost-input-item">
+              <span class="name">北京</span>
+              <div class="field">
+                <input type="number" id="bCostBj" value="50.4" step="0.1" min="35" max="85">
+                <span class="unit">万</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="group-title">
+            <span>其他费用</span>
+            <span class="group-reset" id="bResetFee">恢复默认</span>
+          </div>
+          <div class="grid-2col">
+            <div class="slider-item">
+              <div class="slider-label"><span>司机工资</span><span class="val" id="bDriverVal">12.0万</span></div>
+              <input type="range" id="bDriver" min="10" max="18" step="0.5" value="12">
+            </div>
+            <div class="slider-item">
+              <div class="slider-label"><span>保养维修</span><span class="val" id="bMaintVal">0.50万</span></div>
+              <input type="range" id="bMaint" min="0.10" max="2.00" step="0.05" value="0.50">
+            </div>
+            <div class="slider-item">
+              <div class="slider-label"><span>轮胎</span><span class="val" id="bTireVal">3.00万</span></div>
+              <input type="range" id="bTire" min="1.00" max="4.00" step="0.10" value="3.00">
+            </div>
+            <div class="slider-item">
+              <div class="slider-label"><span>保险</span><span class="val" id="bInsVal">2.50万</span></div>
+              <input type="range" id="bIns" min="1.00" max="4.00" step="0.10" value="2.50">
+            </div>
+            <div class="slider-item">
+              <div class="slider-label"><span>尿素(燃油)</span><span class="val" id="bUreaVal">0.50万</span></div>
+              <input type="range" id="bUrea" min="0" max="2.00" step="0.05" value="0.50">
+            </div>
+            <div class="slider-item">
+              <div class="slider-label"><span>罚款/过路费</span><span class="val" id="bOtherVal">0.10万</span></div>
+              <input type="range" id="bOther" min="0" max="1.00" step="0.05" value="0.10">
+            </div>
+          </div>
+
+          <div class="marginal-contribution">
+            <div class="mc-header">
+              <span class="mc-title">边际贡献</span>
+              <button class="mc-brand-btn" id="bMcBrandBtn">
+                <span id="bMcBrandName">小满</span>
+              </button>
+              <div class="mc-brand-dropdown" id="bMcBrandDropdown"></div>
+              <span class="mc-formula">边际贡献% = Δ利润 ÷ 该品牌自身年利润 × 100%</span>
+            </div>
+            <div class="mc-body" id="bMarginal"></div>
+          </div>
+
+          <div class="footer-hint">以上费用均按年度计算，计入年运营成本</div>
+        </div>
+      </div>
+
+      <div class="right-col">
+        <div class="card">
+          <h3 class="card-title">📈 不同品牌纯电重卡 · 年净收益对比</h3>
+          <div id="bChartProfit" class="chart-box"></div>
+        </div>
+
+        <div class="card">
+          <h3 class="card-title">💰 差额回本周期速览（vs 燃油）</h3>
+          <div class="summary-grid" id="bSummaryGrid"></div>
+          <div class="summary-note">
+            <div class="note-formula">💡 差额回本周期 = (车型成本 − 燃油成本) /(车型利润 − 燃油利润)</div>
+            <span class="note-plain">📌 差额回本周期理解：<b>比买油车多花的购车钱 / 每年比油车多赚的净利润</b> = 回本所需的年数</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 class="card-title">⏱️ 不同品牌 · 差额回本周期（vs 燃油）</h3>
+          <div id="bChartPayback" class="chart-box-sm"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ============================================================
+ * Tabs 切换
+ * ============================================================ */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    setTimeout(() => {
+      if (btn.dataset.tab === 'p1') { eChartProfit && eChartProfit.resize(); eChartPayback && eChartPayback.resize(); }
+      else { bChartProfit && bChartProfit.resize(); bChartPayback && bChartPayback.resize(); }
+    }, 50);
+  });
+});
+
+function $(id) { return document.getElementById(id); }
+
+function calcProfit(load, price, mileage, econ, energyPrice, fixedCost) {
+  const rev = load * price * mileage;
+  const en = (econ / 100) * energyPrice * mileage;
+  return Math.round((rev - en - fixedCost) * 100) / 100;
+}
+
+function analyzePayback(costT, costB, profitT, profitB) {
+  const dC = costT - costB;
+  const dP = profitT - profitB;
+  if (dC <= 0) return { years: 0, label: '即刻', card: '即刻优势', color: '#00ff88' };
+  if (dP > 0) {
+    const y = Math.round((dC / dP) * 10) / 10;
+    return { years: y, label: y.toFixed(1) + '年', card: y.toFixed(1) + ' 年回本', color: '#00d4ff' };
+  }
+  return { years: 0, label: '不划算', card: '不划算', color: '#4a6a95' };
+}
+
+function numVal(id) {
+  const v = parseFloat($(id).value);
+  return isNaN(v) ? 0 : v;
+}
+
+const FUEL_PRICE = 7.0, GAS_PRICE = 6.3;
+
+/* ============================================================
+ * 第 1 页
+ * ============================================================ */
+const CONFIG_ENERGY = {
+  '4x2': {
+    baseLoad: 27,
+    fuel:   { econ: 25,  weight: 0.0 },
+    gas:    { econ: 23,  weight: 0.6 },
+    swap:   { econ: 120, weight: 2.2 },
+    charge: { econ: 120, weight: 1.8 }
+  },
+  '6x4': {
+    baseLoad: 31.4,
+    fuel:   { econ: 35,  weight: 0.0 },
+    gas:    { econ: 33,  weight: 0.6 },
+    swap:   { econ: 130, weight: 2.2 },
+    charge: { econ: 130, weight: 2.0 }
+  }
+};
+
+let eDrive = '4x2';
+let eChartProfit = null, eChartPayback = null;
+
+// 4x2 默认（表1 120-400列车）：燃油29.4 / 天然气39.3 / 换电27.3 / 充电48.3
+// 6x4 默认（表3 130-B8-400）：燃油42.6 / 天然气51.4 / 换电31.5 / 充电52.5
+const eDriveState = {
+  '4x2': { weight: 1.8, econ: 120, costFuel: 29.4, costGas: 39.3, costSwap: 27.3, costCharge: 48.3 },
+  '6x4': { weight: 2.0, econ: 130, costFuel: 42.6, costGas: 51.4, costSwap: 31.5, costCharge: 52.5 }
+};
+
+function eSyncState() {
+  const s = eDriveState[eDrive];
+  s.weight = numVal('eWeight');
+  s.econ = numVal('eEcon');
+  s.costFuel = numVal('eCostFuel');
+  s.costGas = numVal('eCostGas');
+  s.costSwap = numVal('eCostSwap');
+  s.costCharge = numVal('eCostCharge');
+}
+
+function eRestoreState() {
+  const s = eDriveState[eDrive];
+  $('eWeight').value = s.weight;
+  $('eEcon').value = s.econ;
+  $('eCostFuel').value = s.costFuel;
+  $('eCostGas').value = s.costGas;
+  $('eCostSwap').value = s.costSwap;
+  $('eCostCharge').value = s.costCharge;
+}
+
+function eCalc() {
+  const cfg = CONFIG_ENERGY[eDrive];
+  const base = cfg.baseLoad;
+  const mileage = numVal('eMileage');
+  const price = numVal('ePrice');
+  const weightLoss = numVal('eWeight');
+  const econ = numVal('eEcon');
+  const elec = numVal('eElec');
+  const oc = numVal('eOther');
+
+  const d = numVal('eDriver');
+  const m = numVal('eMaint');
+  const t = numVal('eTire');
+  const ins = numVal('eIns');
+  const u = numVal('eUrea');
+
+  const fc = {
+    fuel:   d + (m + 0.5) + t + (ins - 0.5) + u,
+    gas:    d + (m + 1.0) + t + (ins - 0.5),
+    swap:   d + m + t + ins + 5.4,
+    charge: d + m + t + ins
+  };
+
+  const fP = calcProfit(base - cfg.fuel.weight, price, mileage, cfg.fuel.econ, FUEL_PRICE, fc.fuel + oc);
+  const gP = calcProfit(base - cfg.gas.weight, price, mileage, cfg.gas.econ, GAS_PRICE, fc.gas + oc);
+  const sP = calcProfit(base - cfg.swap.weight, price, mileage, cfg.swap.econ, elec, fc.swap + oc);
+  const cP = calcProfit(base - weightLoss, price, mileage, econ, elec, fc.charge + oc);
+
+  const cF = numVal('eCostFuel');
+  const cG = numVal('eCostGas');
+  const cS = numVal('eCostSwap');
+  const cC = numVal('eCostCharge');
+
+  const rG = analyzePayback(cG, cF, gP, fP);
+  const rS = analyzePayback(cS, cF, sP, fP);
+  const rC = analyzePayback(cC, cF, cP, fP);
+
+  return { fP, gP, sP, cP, cF, cG, cS, cC, rG, rS, rC, load: base - weightLoss };
+}
+
+function eUpdateMarginal() {
+  const cfg = CONFIG_ENERGY[eDrive];
+  const base = cfg.baseLoad;
+  const mileage = numVal('eMileage');
+  const price = numVal('ePrice');
+  const weightLoss = numVal('eWeight');
+  const econ = numVal('eEcon');
+  const elec = numVal('eElec');
+  const oc = numVal('eOther');
+  const d = numVal('eDriver');
+  const m = numVal('eMaint');
+  const t = numVal('eTire');
+  const ins = numVal('eIns');
+  const chargeFC = d + m + t + ins;
+  const load = base - weightLoss;
+  const cP = calcProfit(load, price, mileage, econ, elec, chargeFC + oc);
+
+  const el = $('eMarginal');
+  if (cP <= 0.01) {
+    el.innerHTML = '充电车利润过低，暂无法计算边际贡献';
+    return;
+  }
+
+  const dPrice = load * 0.01 * mileage;
+  const pPrice = (dPrice / cP) * 100;
+  const dMile = load * price - (econ / 100) * elec;
+  const pMile = (dMile / cP) * 100;
+  const dWeight = price * mileage;
+  const pWeight = (dWeight / cP) * 100;
+  const dElec = (econ / 100) * 0.1 * mileage;
+  const pElec = (dElec / cP) * 100;
+
+  el.innerHTML =
+    `运价每+0.01元 → 利润 <span class="highlight">+${pPrice.toFixed(1)}%</span>` +
+    '<span class="sep">|</span>' +
+    `里程每+1万km → <span class="highlight">+${pMile.toFixed(1)}%</span>` +
+    '<span class="sep">|</span>' +
+    `自重每-1吨 → <span class="highlight">+${pWeight.toFixed(1)}%</span>` +
+    '<span class="sep">|</span>' +
+    `电价每-0.1元 → <span class="highlight">+${pElec.toFixed(1)}%</span>`;
+}
+
+function eRender() {
+  const r = eCalc();
+  eUpdateMarginal();
+
+  const eChartProfitEl = $('eChartProfit');
+  if (!eChartProfit) eChartProfit = echarts.init(eChartProfitEl);
+  eChartProfit.setOption({
+    backgroundColor: 'transparent',
+    tooltip: { trigger: 'axis', backgroundColor: 'rgba(10,22,40,0.9)', borderColor: 'rgba(0,212,255,0.3)', textStyle: { color: '#e8f0ff' }, formatter: p => p[0].name + '<br/>' + p[0].value.toFixed(1) + ' 万元/年' },
+    grid: { left: '10%', right: '4%', bottom: '22%', top: '15%', containLabel: true },
+    xAxis: {
+      type: 'category', name: '能源类型', nameLocation: 'end', nameGap: 32,
+      nameTextStyle: { fontSize: 12, fontWeight: 'bold', color: '#8aa5cc', align: 'right', verticalAlign: 'top' },
+      data: ['燃油', '天然气', '换电', '充电'],
+      axisLabel: { fontWeight: 'bold', fontSize: 13, color: '#a8c0e0', margin: 14 },
+      axisLine: { lineStyle: { color: 'rgba(255,255,255,0.15)' } }
+    },
+    yAxis: { type: 'value', name: '万元/年', nameTextStyle: { fontSize: 12, color: '#8aa5cc' }, axisLabel: { fontSize: 12, color: '#8aa5cc' }, splitLine: { lineStyle: { color: 'rgba(255,255,255,0.06)' } } },
+    series: [{
+      type: 'bar', barWidth: '50%',
+      data: [
+        { value: r.fP, itemStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'#4a6fa5'},{offset:1,color:'#2a3f5f'}]), borderRadius: [6,6,0,0], shadowColor: 'rgba(74,111,165,0.4)', shadowBlur: 10 }},
+        { value: r.gP, itemStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'#3a9fd8'},{offset:1,color:'#1a5a8f'}]), borderRadius: [6,6,0,0], shadowColor: 'rgba(58,159,216,0.4)', shadowBlur: 10 }},
+        { value: r.sP, itemStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'#2b7cff'},{offset:1,color:'#1a4a9f'}]), borderRadius: [6,6,0,0], shadowColor: 'rgba(43,124,255,0.5)', shadowBlur: 12 }},
+        { value: r.cP, itemStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'#00d4ff'},{offset:1,color:'#0080c0'}]), borderRadius: [6,6,0,0], shadowColor: 'rgba(0,212,255,0.6)', shadowBlur: 15 }}
+      ],
+      label: { show: true, position: 'top', formatter: p => p.value.toFixed(1) + '万', fontSize: 15, color: '#ffffff', fontWeight: 'bold', textShadow: '0 0 8px rgba(0,212,255,0.6)' }
+    }]
+  });
+
+  const chargeVsSwap = r.cP - r.sP;
+  if (chargeVsSwap > 0.05) {
+    $('eChargeHighlight').innerHTML = `💡 充电比换电一年多赚 <b>${chargeVsSwap.toFixed(1)}</b> 万`;
+  } else if (chargeVsSwap < -0.05) {
+    $('eChargeHighlight').innerHTML = `💡 换电比充电一年多赚 <b>${Math.abs(chargeVsSwap).toFixed(1)}</b> 万`;
+  } else {
+    $('eChargeHighlight').innerHTML = `💡 充电与换电年利润相当`;
+  }
+
+  const items = [
+    { name: '天然气', cost: r.cG, profit: r.gP, r: r.rG },
+    { name: '换电',   cost: r.cS, profit: r.sP, r: r.rS },
+    { name: '充电',   cost: r.cC, profit: r.cP, r: r.rC }
+  ];
+  const html = items.map(it => {
+    const diff = it.cost - r.cF;
+    const isCharge = it.name === '充电';
+    const cardCls = isCharge ? 'summary-card green-card' : 'summary-card';
+
+    if (diff <= 0) {
+      const pd = it.profit - r.fP;
+      const txt = pd >= 0 ? `年利润 多${pd.toFixed(1)}万` : `年利润 少${Math.abs(pd).toFixed(1)}万`;
+      return `<div class="${cardCls}">
+        <div class="name">${it.name}</div>
+        <div class="amount">省 ${Math.abs(diff).toFixed(1)}万</div>
+        <div class="result">${txt}</div>
+      </div>`;
+    } else {
+      return `<div class="${cardCls}">
+        <div class="name">${it.name}</div>
+        <div class="amount">多花 ${diff.toFixed(1)}万</div>
+        <div class="result">${it.r.card}</div>
+      </div>`;
+    }
+  }).join('');
+  $('eSummaryGrid').innerHTML = html;
+
+  const eChartPaybackEl = $('eChartPayback');
+  if (!eChartPayback) eChartPayback = echarts.init(eChartPaybackEl);
+  eChartPayback.setOption({
+    backgroundColor: 'transparent',
+    tooltip: { trigger: 'axis', backgroundColor: 'rgba(10,22,40,0.9)', borderColor: 'rgba(0,212,255,0.3)', textStyle: { color: '#e8f0ff' }, formatter: p => p[0].name + '<br/>' + p[0].text },
+    grid: { left: '10%', right: '4%', bottom: '22%', top: '15%', containLabel: true },
+    xAxis: {
+      type: 'category', name: '能源类型', nameLocation: 'end', nameGap: 32,
+      nameTextStyle: { fontSize: 12, fontWeight: 'bold', color: '#8aa5cc', align: 'right', verticalAlign: 'top' },
+      data: ['燃油（基准）', '天然气', '换电', '充电'],
+      axisLabel: { fontWeight: 'bold', fontSize: 13, color: '#a8c0e0', margin: 14 },
+      axisLine: { lineStyle: { color: 'rgba(255,255,255,0.15)' } }
+    },
+    yAxis: { type: 'value', name: '年数', nameTextStyle: { fontSize: 12, color: '#8aa5cc' }, axisLabel: { fontSize: 12, color: '#8aa5cc' }, splitLine: { lineStyle: { color: 'rgba(255,255,255,0.06)' } }, min: 0 },
+    series: [{
+      type: 'bar', barWidth: '50%',
+      data: [
+        { value: 0, itemStyle: { color: 'rgba(255,255,255,0.15)', borderRadius: [6,6,0,0] }, label: { show: true, position: 'top', formatter: '基准', fontSize: 11, color: '#6a8ab5', fontWeight: 'bold' } },
+        { value: r.rG.years, itemStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'#3a9fd8'},{offset:1,color:'#1a5a8f'}]), borderRadius: [6,6,0,0], shadowColor: 'rgba(58,159,216,0.4)', shadowBlur: 10 }, label: { show: true, position: 'top', formatter: r.rG.label, fontSize: 15, color: '#ffffff', fontWeight: 'bold', textShadow: '0 0 8px rgba(0,212,255,0.6)' } },
+        { value: r.rS.years, itemStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'#2b7cff'},{offset:1,color:'#1a4a9f'}]), borderRadius: [6,6,0,0], shadowColor: 'rgba(43,124,255,0.5)', shadowBlur: 12 }, label: { show: true, position: 'top', formatter: r.rS.label, fontSize: 15, color: '#ffffff', fontWeight: 'bold', textShadow: '0 0 8px rgba(0,212,255,0.6)' } },
+        { value: r.rC.years, itemStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'#00d4ff'},{offset:1,color:'#0080c0'}]), borderRadius: [6,6,0,0], shadowColor: 'rgba(0,212,255,0.6)', shadowBlur: 15 }, label: { show: true, position: 'top', formatter: r.rC.label, fontSize: 15, color: '#ffffff', fontWeight: 'bold', textShadow: '0 0 8px rgba(0,212,255,0.6)' } }
+      ]
+    }]
+  });
+}
+
+function eUpdateLabels() {
+  $('eMileageVal').textContent = numVal('eMileage').toFixed(1) + ' 万公里';
+  $('ePriceVal').textContent   = numVal('ePrice').toFixed(3) + ' 元';
+  $('eWeightVal').textContent  = numVal('eWeight').toFixed(1) + ' 吨';
+  $('eEconVal').textContent    = numVal('eEcon').toFixed(0) + ' kWh';
+  $('eElecVal').textContent    = numVal('eElec').toFixed(2) + ' 元/度';
+  $('eDriverVal').textContent = numVal('eDriver').toFixed(1) + '万';
+  $('eMaintVal').textContent  = numVal('eMaint').toFixed(2) + '万';
+  $('eTireVal').textContent   = numVal('eTire').toFixed(2) + '万';
+  $('eInsVal').textContent    = numVal('eIns').toFixed(2) + '万';
+  $('eUreaVal').textContent   = numVal('eUrea').toFixed(2) + '万';
+  $('eOtherVal').textContent  = numVal('eOther').toFixed(2) + '万';
+}
+
+function eBind() {
+  const sliderIds = ['eMileage','ePrice','eWeight','eEcon','eElec','eOther',
+                     'eDriver','eMaint','eTire','eIns','eUrea'];
+  sliderIds.forEach(id => $(id).addEventListener('input', () => {
+    eSyncState(); eUpdateLabels(); eRender();
+  }));
+
+  const inputIds = ['eCostFuel','eCostGas','eCostSwap','eCostCharge'];
+  inputIds.forEach(id => $(id).addEventListener('input', () => {
+    eSyncState(); eRender();
+  }));
+
+  $('eBtn4x2').addEventListener('click', () => {
+    if (eDrive === '4x2') return;
+    eSyncState();
+    eDrive = '4x2';
+    $('eBtn4x2').classList.add('active');
+    $('eBtn6x4').classList.remove('active');
+    eRestoreState(); eUpdateLabels(); eRender();
+  });
+  $('eBtn6x4').addEventListener('click', () => {
+    if (eDrive === '6x4') return;
+    eSyncState();
+    eDrive = '6x4';
+    $('eBtn6x4').classList.add('active');
+    $('eBtn4x2').classList.remove('active');
+    eRestoreState(); eUpdateLabels(); eRender();
+  });
+
+  $('eResetCost').addEventListener('click', () => {
+    const def = {
+      '4x2': { fuel: 29.4, gas: 39.3, swap: 27.3, charge: 48.3 },
+      '6x4': { fuel: 42.6, gas: 51.4, swap: 31.5, charge: 52.5 }
+    }[eDrive];
+    $('eCostFuel').value = def.fuel;
+    $('eCostGas').value = def.gas;
+    $('eCostSwap').value = def.swap;
+    $('eCostCharge').value = def.charge;
+    eSyncState(); eRender();
+  });
+  $('eResetFee').addEventListener('click', () => {
+    $('eDriver').value = 12; $('eMaint').value = 0.5;
+    $('eTire').value = 3; $('eIns').value = 2.5;
+    $('eUrea').value = 0.5; $('eOther').value = 0.1;
+    eUpdateLabels(); eRender();
+  });
+
+  window.addEventListener('resize', () => {
+    eChartProfit && eChartProfit.resize();
+    eChartPayback && eChartPayback.resize();
+  });
+}
+
+eBind(); eUpdateLabels();
+setTimeout(() => { eRender(); }, 100);
+
+
+/* ============================================================
+ * 第 2 页
+ * ============================================================ */
+const CONFIG_BRAND = {
+  '4x2': {
+    baseLoad: 27, fuelEcon: 25, fuelCost: 30,
+    brands: [
+      { name: '小满', econ: 90,  weight: 2.0, costKey: 'bCostXm', defaultCost: 47.3 },
+      { name: '零一', econ: 100, weight: 2.2, costKey: 'bCostLy', defaultCost: 47.3 },
+      { name: '解放', econ: 115, weight: 3.0, costKey: 'bCostJf', defaultCost: 52.5 },
+      { name: '陕汽', econ: 110, weight: 3.0, costKey: 'bCostSq', defaultCost: 52.5 },
+      { name: '重汽', econ: 125, weight: 3.0, costKey: 'bCostZq', defaultCost: 50.4 },
+      { name: '北京', econ: 115, weight: 3.0, costKey: 'bCostBj', defaultCost: 50.4 }
+    ]
+  },
+  '6x4': {
+    baseLoad: 31.4, fuelEcon: 35, fuelCost: 42,
+    brands: [
+      { name: '小满', econ: 90,  weight: 2.0, costKey: 'bCostXm', defaultCost: 50.4 },
+      { name: '零一', econ: 110, weight: 2.2, costKey: 'bCostLy', defaultCost: 50.4 },
+      { name: '解放', econ: 125, weight: 3.0, costKey: 'bCostJf', defaultCost: 55.7 },
+      { name: '陕汽', econ: 130, weight: 3.0, costKey: 'bCostSq', defaultCost: 55.7 },
+      { name: '重汽', econ: 130, weight: 3.0, costKey: 'bCostZq', defaultCost: 54.6 },
+      { name: '北京', econ: 110, weight: 3.0, costKey: 'bCostBj', defaultCost: 54.6 }
+    ]
+  }
+};
+
+let bDrive = '4x2';
+let bChartProfit = null, bChartPayback = null;
+let bMcBrand = '小满';
+
+const bCostKeys = ['bCostXm','bCostLy','bCostJf','bCostSq','bCostZq','bCostBj'];
+
+// 4x2 品牌默认（表2）：小满47.3 / 零一47.3 / 解放52.5 / 陕汽52.5 / 重汽50.4 / 北京50.4
+// 6x4 品牌默认（表3）：小满50.4 / 零一50.4 / 解放55.7 / 陕汽55.7 / 重汽54.6 / 北京54.6
+const bDriveState = {
+  '4x2': {
+    weight: 1.8, econ: 120,
+    costs: { bCostXm: 47.3, bCostLy: 47.3, bCostJf: 52.5, bCostSq: 52.5, bCostZq: 50.4, bCostBj: 50.4 }
+  },
+  '6x4': {
+    weight: 2.0, econ: 130,
+    costs: { bCostXm: 50.4, bCostLy: 50.4, bCostJf: 55.7, bCostSq: 55.7, bCostZq: 54.6, bCostBj: 54.6 }
+  }
+};
+
+function bSyncState() {
+  const s = bDriveState[bDrive];
+  s.weight = numVal('bWeight');
+  s.econ = numVal('bEcon');
+  bCostKeys.forEach(k => { s.costs[k] = numVal(k); });
+}
+
+function bRestoreState() {
+  const s = bDriveState[bDrive];
+  $('bWeight').value = s.weight;
+  $('bEcon').value = s.econ;
+  bCostKeys.forEach(k => { $(k).value = s.costs[k]; });
+}
+
+function bCalc() {
+  const cfg = CONFIG_BRAND[bDrive];
+  const base = cfg.baseLoad;
+  const mileage = numVal('bMileage');
+  const price = numVal('bPrice');
+  const weightLoss = numVal('bWeight');
+  const elec = numVal('bElec');
+  const oc = numVal('bOther');
+
+  const d = numVal('bDriver');
+  const m = numVal('bMaint');
+  const t = numVal('bTire');
+  const ins = numVal('bIns');
+  const u = numVal('bUrea');
+
+  const commonElec = d + m + t + ins;
+  const fuelFC = d + (m + 0.5) + t + (ins - 0.5) + u;
+
+  const brandProfits = cfg.brands.map(br => {
+    const load = base - br.weight;
+    const p = calcProfit(load, price, mileage, br.econ, elec, commonElec + oc);
+    return { name: br.name, profit: p, cost: numVal(br.costKey), load: load };
+  });
+
+  const fuelP = calcProfit(base - 0, price, mileage, cfg.fuelEcon, FUEL_PRICE, fuelFC + oc);
+  const fuelCost = cfg.fuelCost;
+
+  const analyses = brandProfits.map(b => analyzePayback(b.cost, fuelCost, b.profit, fuelP));
+
+  return { brandProfits, fuelP, fuelCost, analyses };
+}
+
+function bColorFor(v, vmin, vmax) {
+  if (vmax - vmin < 1e-6) return '#00d4ff';
+  const ratio = (v - vmin) / (vmax - vmin);
+  const c1 = [26, 74, 159], c2 = [0, 212, 255];
+  const c = c1.map((x, i) => Math.round(x + (c2[i] - x) * ratio));
+  return `rgb(${c[0]},${c[1]},${c[2]})`;
+}
+
+function bUpdateMarginal() {
+  const cfg = CONFIG_BRAND[bDrive];
+  const base = cfg.baseLoad;
+  const mileage = numVal('bMileage');
+  const price = numVal('bPrice');
+  const elec = numVal('bElec');
+  const oc = numVal('bOther');
+  const d = numVal('bDriver');
+  const m = numVal('bMaint');
+  const t = numVal('bTire');
+  const ins = numVal('bIns');
+  const commonElec = d + m + t + ins;
+
+  const brandObj = cfg.brands.find(b => b.name === bMcBrand) || cfg.brands[0];
+  const load = base - brandObj.weight;
+  const cP = calcProfit(load, price, mileage, brandObj.econ, elec, commonElec + oc);
+
+  const el = $('bMarginal');
+  if (cP <= 0.01) {
+    el.innerHTML = `${brandObj.name} 利润过低，暂无法计算边际贡献`;
+    return;
+  }
+
+  const dPrice = load * 0.01 * mileage;
+  const pPrice = (dPrice / cP) * 100;
+  const dMile = load * price - (brandObj.econ / 100) * elec;
+  const pMile = (dMile / cP) * 100;
+  const dWeight = price * mileage;
+  const pWeight = (dWeight / cP) * 100;
+  const dElec = (brandObj.econ / 100) * 0.1 * mileage;
+  const pElec = (dElec / cP) * 100;
+
+  el.innerHTML =
+    `运价每+0.01元 → 利润 <span class="highlight">+${pPrice.toFixed(1)}%</span>` +
+    '<span class="sep">|</span>' +
+    `里程每+1万km → <span class="highlight">+${pMile.toFixed(1)}%</span>` +
+    '<span class="sep">|</span>' +
+    `自重每-1吨 → <span class="highlight">+${pWeight.toFixed(1)}%</span>` +
+    '<span class="sep">|</span>' +
+    `电价每-0.1元 → <span class="highlight">+${pElec.toFixed(1)}%</span>`;
+}
+
+function bRenderBrandDropdown() {
+  const cfg = CONFIG_BRAND[bDrive];
+  const dropdown = $('bMcBrandDropdown');
+  dropdown.innerHTML = cfg.brands.map(br => {
+    const isActive = br.name === bMcBrand;
+    return `<div class="mc-brand-option ${isActive ? 'active' : ''}" data-brand="${br.name}">${br.name}</div>`;
+  }).join('');
+  dropdown.querySelectorAll('.mc-brand-option').forEach(opt => {
+    opt.addEventListener('click', (e) => {
+      e.stopPropagation();
+      bMcBrand = opt.dataset.brand;
+      $('bMcBrandName').textContent = bMcBrand;
+      $('bMcBrandDropdown').classList.remove('open');
+      $('bMcBrandBtn').classList.remove('open');
+      bRenderBrandDropdown();
+      bUpdateMarginal();
+    });
+  });
+}
+
+function bRender() {
+  const r = bCalc();
+  const names = r.brandProfits.map(b => b.name);
+  const profits = r.brandProfits.map(b => b.profit);
+  const vmin = Math.min(...profits), vmax = Math.max(...profits);
+
+  bUpdateMarginal();
+
+  const bChartProfitEl = $('bChartProfit');
+  if (!bChartProfit) bChartProfit = echarts.init(bChartProfitEl);
+  bChartProfit.setOption({
+    backgroundColor: 'transparent',
+    tooltip: { trigger: 'axis', backgroundColor: 'rgba(10,22,40,0.9)', borderColor: 'rgba(0,212,255,0.3)', textStyle: { color: '#e8f0ff' }, formatter: p => p[0].name + '<br/>' + p[0].value.toFixed(1) + ' 万元/年' },
+    grid: { left: '10%', right: '4%', bottom: '22%', top: '15%', containLabel: true },
+    xAxis: { type: 'category', name: '品牌', nameLocation: 'end', nameGap: 32, nameTextStyle: { fontSize: 12, fontWeight: 'bold', color: '#8aa5cc', align: 'right', verticalAlign: 'top' }, data: names, axisLabel: { fontWeight: 'bold', fontSize: 13, color: '#a8c0e0', margin: 14 }, axisLine: { lineStyle: { color: 'rgba(255,255,255,0.15)' } } },
+    yAxis: { type: 'value', name: '万元/年', nameTextStyle: { fontSize: 12, color: '#8aa5cc' }, axisLabel: { fontSize: 12, color: '#8aa5cc' }, splitLine: { lineStyle: { color: 'rgba(255,255,255,0.06)' } } },
+    series: [{
+      type: 'bar', barWidth: '55%',
+      data: profits.map(v => {
+        const c = bColorFor(v, vmin, vmax);
+        return { value: v, itemStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color: c},{offset:1,color: c.replace('rgb','rgba').replace(')',',0.6)')}]), borderRadius: [6,6,0,0], shadowColor: c, shadowBlur: 12 } };
+      }),
+      label: { show: true, position: 'top', formatter: p => p.value.toFixed(1) + '万', fontSize: 15, color: '#ffffff', fontWeight: 'bold', textShadow: '0 0 8px rgba(0,212,255,0.6)' }
+    }]
+  });
+
+  const html = r.brandProfits.map((b, i) => {
+    const diff = b.cost - r.fuelCost;
+    const a = r.analyses[i];
+    if (diff <= 0) {
+      return `<div class="summary-card"><div class="name">${b.name}</div><div class="amount">省 ${Math.abs(diff).toFixed(1)}万</div><div class="result">${a.card}</div></div>`;
+    }
+    return `<div class="summary-card"><div class="name">${b.name}</div><div class="amount">多花 ${diff.toFixed(1)}万</div><div class="result">${a.card}</div></div>`;
+  }).join('');
+  $('bSummaryGrid').innerHTML = html;
+
+  const bChartPaybackEl = $('bChartPayback');
+  if (!bChartPayback) bChartPayback = echarts.init(bChartPaybackEl);
+  const xNames = ['基准（燃油）', ...names];
+  const barData = [
+    { value: 0, itemStyle: { color: 'rgba(255,255,255,0.15)', borderRadius: [6,6,0,0] }, label: { show: true, position: 'top', formatter: '基准', fontSize: 11, color: '#6a8ab5', fontWeight: 'bold' } },
+    ...r.analyses.map(a => ({
+      value: a.years,
+      itemStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'#00d4ff'},{offset:1,color:'#0080c0'}]), borderRadius: [6,6,0,0], shadowColor: 'rgba(0,212,255,0.5)', shadowBlur: 12 },
+      label: { show: true, position: 'top', formatter: a.label, fontSize: 15, color: '#ffffff', fontWeight: 'bold', textShadow: '0 0 8px rgba(0,212,255,0.6)' }
+    }))
+  ];
+
+  bChartPayback.setOption({
+    backgroundColor: 'transparent',
+    tooltip: { trigger: 'axis', backgroundColor: 'rgba(10,22,40,0.9)', borderColor: 'rgba(0,212,255,0.3)', textStyle: { color: '#e8f0ff' }, formatter: p => p[0].name + '<br/>' + p[0].text },
+    grid: { left: '10%', right: '4%', bottom: '22%', top: '15%', containLabel: true },
+    xAxis: { type: 'category', name: '品牌', nameLocation: 'end', nameGap: 32, nameTextStyle: { fontSize: 12, fontWeight: 'bold', color: '#8aa5cc', align: 'right', verticalAlign: 'top' }, data: xNames, axisLabel: { fontWeight: 'bold', fontSize: 13, color: '#a8c0e0', margin: 14 }, axisLine: { lineStyle: { color: 'rgba(255,255,255,0.15)' } } },
+    yAxis: { type: 'value', name: '年数', nameTextStyle: { fontSize: 12, color: '#8aa5cc' }, axisLabel: { fontSize: 12, color: '#8aa5cc' }, splitLine: { lineStyle: { color: 'rgba(255,255,255,0.06)' } }, min: 0 },
+    series: [{ type: 'bar', barWidth: '55%', data: barData }]
+  });
+}
+
+function bUpdateLabels() {
+  $('bMileageVal').textContent = numVal('bMileage').toFixed(1) + ' 万公里';
+  $('bPriceVal').textContent   = numVal('bPrice').toFixed(3) + ' 元';
+  $('bWeightVal').textContent  = numVal('bWeight').toFixed(1) + ' 吨';
+  $('bEconVal').textContent    = numVal('bEcon').toFixed(0) + ' kWh';
+  $('bElecVal').textContent    = numVal('bElec').toFixed(2) + ' 元/度';
+  $('bDriverVal').textContent = numVal('bDriver').toFixed(1) + '万';
+  $('bMaintVal').textContent  = numVal('bMaint').toFixed(2) + '万';
+  $('bTireVal').textContent   = numVal('bTire').toFixed(2) + '万';
+  $('bInsVal').textContent    = numVal('bIns').toFixed(2) + '万';
+  $('bUreaVal').textContent   = numVal('bUrea').toFixed(2) + '万';
+  $('bOtherVal').textContent  = numVal('bOther').toFixed(2) + '万';
+}
+
+function bBind() {
+  const sliderIds = ['bMileage','bPrice','bWeight','bEcon','bElec','bOther',
+                     'bDriver','bMaint','bTire','bIns','bUrea'];
+  sliderIds.forEach(id => $(id).addEventListener('input', () => {
+    bSyncState(); bUpdateLabels(); bRender();
+  }));
+
+  bCostKeys.forEach(id => $(id).addEventListener('input', () => {
+    bSyncState(); bRender();
+  }));
+
+  $('bBtn4x2').addEventListener('click', () => {
+    if (bDrive === '4x2') return;
+    bSyncState();
+    bDrive = '4x2';
+    $('bBtn4x2').classList.add('active');
+    $('bBtn6x4').classList.remove('active');
+    bRestoreState(); bRenderBrandDropdown(); bUpdateLabels(); bRender();
+  });
+  $('bBtn6x4').addEventListener('click', () => {
+    if (bDrive === '6x4') return;
+    bSyncState();
+    bDrive = '6x4';
+    $('bBtn6x4').classList.add('active');
+    $('bBtn4x2').classList.remove('active');
+    bRestoreState(); bRenderBrandDropdown(); bUpdateLabels(); bRender();
+  });
+
+  $('bResetCost').addEventListener('click', () => {
+    const defCosts = {
+      '4x2': { bCostXm: 47.3, bCostLy: 47.3, bCostJf: 52.5, bCostSq: 52.5, bCostZq: 50.4, bCostBj: 50.4 },
+      '6x4': { bCostXm: 50.4, bCostLy: 50.4, bCostJf: 55.7, bCostSq: 55.7, bCostZq: 54.6, bCostBj: 54.6 }
+    }[bDrive];
+    bCostKeys.forEach(k => { $(k).value = defCosts[k]; });
+    bSyncState(); bRender();
+  });
+  $('bResetFee').addEventListener('click', () => {
+    $('bDriver').value = 12; $('bMaint').value = 0.5;
+    $('bTire').value = 3; $('bIns').value = 2.5;
+    $('bUrea').value = 0.5; $('bOther').value = 0.1;
+    bUpdateLabels(); bRender();
+  });
+
+  const brandBtn = $('bMcBrandBtn');
+  const brandDropdown = $('bMcBrandDropdown');
+
+  brandBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isOpen = brandDropdown.classList.contains('open');
+    if (isOpen) {
+      brandDropdown.classList.remove('open');
+      brandBtn.classList.remove('open');
+    } else {
+      brandDropdown.classList.add('open');
+      brandBtn.classList.add('open');
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!brandDropdown.contains(e.target) && e.target !== brandBtn && !brandBtn.contains(e.target)) {
+      brandDropdown.classList.remove('open');
+      brandBtn.classList.remove('open');
+    }
+  });
+
+  window.addEventListener('resize', () => {
+    bChartProfit && bChartProfit.resize();
+    bChartPayback && bChartPayback.resize();
+  });
+}
+
+bBind(); bRenderBrandDropdown(); bUpdateLabels();
+setTimeout(() => { bRender(); }, 150);
+</script>
+</body>
+</html>
