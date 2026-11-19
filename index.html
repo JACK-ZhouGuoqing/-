@@ -275,6 +275,63 @@
     .left-col { position: static; }
     .summary-grid { grid-template-columns: 1fr 1fr; }
   }
+
+  /* ===== 第 3 页 · 考虑残值版 TCO ===== */
+  .ctrl-bar {
+    display: flex; flex-wrap: wrap; gap: 14px 26px; align-items: center;
+    margin-bottom: 16px; padding: 13px 20px;
+    background: linear-gradient(135deg, rgba(0,212,255,0.10) 0%, rgba(43,124,255,0.05) 100%);
+    border: 1px solid rgba(0,212,255,0.22); border-radius: 14px;
+    box-shadow: 0 0 28px rgba(0,212,255,0.10), inset 0 1px 0 rgba(0,212,255,0.16);
+  }
+  .ctrl-group { display: flex; align-items: center; gap: 8px; }
+  .ctrl-label { font-size: 13px; color: #8aa5cc; font-weight: 700; margin-right: 2px; white-space: nowrap; }
+  .seg-btn {
+    border: 1px solid rgba(0,212,255,0.28); background: rgba(255,255,255,0.04);
+    color: #7a9ac5; padding: 8px 18px; border-radius: 9px;
+    font-size: 13.5px; font-weight: 700; cursor: pointer; transition: all .22s; font-family: inherit;
+  }
+  .seg-btn:hover { color: #00d4ff; border-color: #00d4ff; box-shadow: 0 0 12px rgba(0,212,255,.22); }
+  .seg-btn.active {
+    background: linear-gradient(135deg, #00d4ff 0%, #2b7cff 100%);
+    border-color: #00d4ff; color: #fff; box-shadow: 0 0 20px rgba(0,212,255,.5);
+  }
+  .seg-btn.year.active {
+    background: linear-gradient(135deg, #00ff88 0%, #00b36a 100%);
+    border-color: #00ff88; box-shadow: 0 0 20px rgba(0,255,136,.4);
+  }
+  .p3-badge {
+    display: inline-block; font-size: 11px; font-weight: 700; color: #00ff88;
+    background: rgba(0,255,136,.1); border: 1px solid rgba(0,255,136,.32);
+    padding: 2px 9px; border-radius: 7px; margin-left: 8px; vertical-align: middle;
+  }
+  .rr-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px 10px; }
+  .rr-grid.brands { grid-template-columns: repeat(3, 1fr); }
+  .rr-item { display: flex; align-items: center; gap: 6px; }
+  .rr-item .nm { font-size: 12.5px; color: #c8d8f0; font-weight: 700; flex-shrink: 0; }
+  .rr-input {
+    width: 100%; min-width: 0; background: rgba(0,212,255,0.06);
+    border: 1px solid rgba(0,212,255,0.25); border-radius: 7px;
+    color: #00d4ff; font-size: 13px; font-weight: 700;
+    padding: 5px 8px; outline: none; font-family: inherit; text-align: right;
+  }
+  .rr-input:focus { border-color: #00d4ff; box-shadow: 0 0 14px rgba(0,212,255,.4); }
+  .rr-item .unit { font-size: 11px; color: #6a8ab5; flex-shrink: 0; }
+  .table-note { font-size: 11px; color: #6a8ab5; line-height: 1.85; margin-top: 10px; }
+  .table-note b { color: #00d4ff; }
+  .detail-table-wrap { overflow-x: auto; }
+  .detail-table { width: 100%; border-collapse: collapse; font-size: 12px; white-space: nowrap; }
+  .detail-table th, .detail-table td { padding: 9px 11px; text-align: right; border-bottom: 1px solid rgba(0,212,255,.10); }
+  .detail-table th { color: #8aa5cc; font-weight: 700; font-size: 11.5px; border-bottom: 1.5px solid rgba(0,212,255,.28); }
+  .detail-table th:first-child, .detail-table td:first-child {
+    text-align: left; position: sticky; left: 0; background: #0d1b30; z-index: 2;
+  }
+  .detail-table td { color: #c8d8f0; }
+  .detail-table tr:hover td { background: rgba(0,212,255,.06); }
+  .detail-table .name-cell { font-weight: 800; color: #fff; }
+  .detail-table .accent { color: #00d4ff; font-weight: 800; }
+  .detail-table .hi { color: #00ff88; font-weight: 800; }
+  .detail-table .sub-row td { color: #6a8ab5; font-size: 11px; }
 </style>
 </head>
 <body>
@@ -284,6 +341,7 @@
   <div class="tabs">
     <button class="tab-btn active" data-tab="p1">🚛 不同能源类型头挂列车TCO测算</button>
     <button class="tab-btn" data-tab="p2">🏷️ 不同品牌头挂列车TCO测算</button>
+    <button class="tab-btn" data-tab="p3">💰 考虑残值版TCO测算（5年/8年）</button>
   </div>
 
   <!-- ==================== 第 1 页 ==================== -->
@@ -416,8 +474,8 @@
           </div>
           <div class="summary-grid" id="eSummaryGrid"></div>
           <div class="summary-note">
-            <div class="note-formula">💡 差额回本周期 = (车型成本 − 燃油成本) / (车型利润 − 燃油利润)</div>
-            <span class="note-plain">📌 差额回本周期理解：<b>比买油车多花的购车钱 / 每年比油车多赚的净利润</b> = 回本所需的年数</span>
+            <div class="note-formula">💡 差额回本周期 = (车型成本 − 燃油成本) ÷ (车型利润 − 燃油利润)</div>
+            <span class="note-plain">📌 通俗理解：<b>多花的购车钱 ÷ 每年多赚的净利润</b> = 回本所需的年数</span>
           </div>
         </div>
 
@@ -574,14 +632,132 @@
           <h3 class="card-title">💰 差额回本周期速览（vs 燃油）</h3>
           <div class="summary-grid" id="bSummaryGrid"></div>
           <div class="summary-note">
-            <div class="note-formula">💡 差额回本周期 = (车型成本 − 燃油成本) /(车型利润 − 燃油利润)</div>
-            <span class="note-plain">📌 差额回本周期理解：<b>比买油车多花的购车钱 / 每年比油车多赚的净利润</b> = 回本所需的年数</span>
+            <div class="note-formula">💡 差额回本周期 = (车型成本 − 燃油成本) ÷ (车型利润 − 燃油利润)</div>
+            <span class="note-plain">📌 通俗理解：<b>多花的购车钱 ÷ 每年多赚的净利润</b> = 回本所需的年数</span>
           </div>
         </div>
 
         <div class="card">
           <h3 class="card-title">⏱️ 不同品牌 · 差额回本周期（vs 燃油）</h3>
           <div id="bChartPayback" class="chart-box-sm"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 第 3 页 · 考虑残值版 ==================== -->
+  <div class="tab-page" id="tab-p3">
+
+    <div class="page-header">
+      <h1>考虑残值版头挂列车TCO测算<span class="p3-badge">全生命周期口径</span></h1>
+      <div class="sub">口径参照《头挂列车成本收益对比-V5》：期末残值 = 初始购置成本 × 残值率；年均折旧 =（购置成本 − 残值）÷ 折旧年限；全生命周期年均成本 = 年均运营成本 + 年均折旧</div>
+    </div>
+
+    <div class="ctrl-bar">
+      <div class="ctrl-group">
+        <span class="ctrl-label">对比维度</span>
+        <button class="seg-btn active" id="rDimEnergy">按能源类型</button>
+        <button class="seg-btn" id="rDimBrand">按品牌</button>
+      </div>
+      <div class="ctrl-group">
+        <span class="ctrl-label">折旧年限</span>
+        <button class="seg-btn year active" id="rYear5">5 年</button>
+        <button class="seg-btn year" id="rYear8">8 年</button>
+      </div>
+      <div class="ctrl-group">
+        <span class="ctrl-label">车型</span>
+        <button class="seg-btn active" id="rBtn4x2">4×2</button>
+        <button class="seg-btn" id="rBtn6x4">6×4</button>
+      </div>
+    </div>
+
+    <div class="main-layout">
+      <div class="left-col">
+        <div class="card">
+          <div class="group-title compact">核心参数</div>
+          <div class="slider-item">
+            <div class="slider-label"><span>年运营里程</span><span class="val" id="rMileageVal">10.0 万公里</span></div>
+            <input type="range" id="rMileage" min="5" max="20" step="0.1" value="10">
+          </div>
+          <div class="slider-item">
+            <div class="slider-label"><span>吨公里运价</span><span class="val" id="rPriceVal">0.160 元</span></div>
+            <input type="range" id="rPrice" min="0.10" max="0.30" step="0.005" value="0.16">
+          </div>
+          <div class="slider-item">
+            <div class="slider-label"><span>自重损耗</span><span class="val" id="rWeightVal">1.8 吨</span></div>
+            <input type="range" id="rWeight" min="0" max="3" step="0.1" value="1.8">
+          </div>
+          <div class="slider-item">
+            <div class="slider-label"><span>百公里电耗</span><span class="val" id="rEconVal">120 kWh</span></div>
+            <input type="range" id="rEcon" min="80" max="200" step="1" value="120">
+          </div>
+          <div class="slider-item">
+            <div class="slider-label"><span>电价</span><span class="val" id="rElecVal">0.80 元/度</span></div>
+            <input type="range" id="rElec" min="0.30" max="1.50" step="0.05" value="0.80">
+          </div>
+
+          <div class="group-title">
+            <span>购车成本<span class="group-subtitle">（头+挂列车初始购置成本）</span></span>
+            <span class="group-reset" id="rResetCost">恢复默认</span>
+          </div>
+          <div class="cost-inputs" id="rCostArea"></div>
+
+          <div class="group-title">
+            <span>残值率<span class="group-subtitle" id="rRateHint">（按能源类型，可调整）</span></span>
+            <span class="group-reset" id="rResetRate">恢复默认</span>
+          </div>
+          <div class="rr-grid" id="rRateArea"></div>
+
+          <div class="group-title">
+            <span>其他费用</span>
+            <span class="group-reset" id="rResetFee">恢复默认</span>
+          </div>
+          <div class="grid-2col">
+            <div class="slider-item">
+              <div class="slider-label"><span>司机工资</span><span class="val" id="rDriverVal">12.0万</span></div>
+              <input type="range" id="rDriver" min="10" max="18" step="0.5" value="12">
+            </div>
+            <div class="slider-item">
+              <div class="slider-label"><span>保养维修</span><span class="val" id="rMaintVal">0.50万</span></div>
+              <input type="range" id="rMaint" min="0.10" max="2.00" step="0.05" value="0.50">
+            </div>
+            <div class="slider-item">
+              <div class="slider-label"><span>轮胎</span><span class="val" id="rTireVal">3.00万</span></div>
+              <input type="range" id="rTire" min="1.00" max="4.00" step="0.10" value="3.00">
+            </div>
+            <div class="slider-item">
+              <div class="slider-label"><span>保险</span><span class="val" id="rInsVal">2.50万</span></div>
+              <input type="range" id="rIns" min="1.00" max="4.00" step="0.10" value="2.50">
+            </div>
+            <div class="slider-item">
+              <div class="slider-label"><span>尿素(燃油)</span><span class="val" id="rUreaVal">0.50万</span></div>
+              <input type="range" id="rUrea" min="0" max="2.00" step="0.05" value="0.50">
+            </div>
+            <div class="slider-item">
+              <div class="slider-label"><span>罚款/过路费</span><span class="val" id="rOtherVal">0.10万</span></div>
+              <input type="range" id="rOther" min="0" max="1.00" step="0.05" value="0.10">
+            </div>
+          </div>
+
+          <div class="footer-hint">残值率参照《头挂列车成本收益对比-V5》分行设置，可按实际车辆处置价格调整</div>
+        </div>
+      </div>
+
+      <div class="right-col">
+        <div class="card">
+          <h3 class="card-title" id="rProfitTitle">📈 年均净收益对比（含残值折旧）</h3>
+          <div id="rChartProfit" class="chart-box"></div>
+        </div>
+
+        <div class="card">
+          <h3 class="card-title" id="rTableTitle">🧾 全生命周期 TCO 明细</h3>
+          <div class="detail-table-wrap" id="rDetailTable"></div>
+          <div class="table-note" id="rTableNote"></div>
+        </div>
+
+        <div class="card">
+          <h3 class="card-title" id="rTotalTitle">💰 累计净收益（含残值）</h3>
+          <div id="rChartTotal" class="chart-box-sm"></div>
         </div>
       </div>
     </div>
@@ -600,8 +776,13 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.classList.add('active');
     document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
     setTimeout(() => {
-      if (btn.dataset.tab === 'p1') { eChartProfit && eChartProfit.resize(); eChartPayback && eChartPayback.resize(); }
-      else { bChartProfit && bChartProfit.resize(); bChartPayback && bChartPayback.resize(); }
+      const t = btn.dataset.tab;
+      if (t === 'p1') { eChartProfit && eChartProfit.resize(); eChartPayback && eChartPayback.resize(); }
+      else if (t === 'p2') { bChartProfit && bChartProfit.resize(); bChartPayback && bChartPayback.resize(); }
+      else if (t === 'p3') {
+        rChartProfit && rChartProfit.resize(); rChartTotal && rChartTotal.resize();
+        if (typeof rRender === 'function') rRender();
+      }
     }, 50);
   });
 });
@@ -1236,6 +1417,333 @@ function bBind() {
 
 bBind(); bRenderBrandDropdown(); bUpdateLabels();
 setTimeout(() => { bRender(); }, 150);
+
+
+/* ============================================================
+ * 第 3 页 · 考虑残值版 TCO
+ * 口径参照《头挂列车成本收益对比-V5》：
+ *   期末残值 = 初始购置成本 × 残值率
+ *   应折旧总额 = 初始购置成本 − 期末残值
+ *   年均折旧 = 应折旧总额 ÷ 折旧年限
+ *   全生命周期年均成本 = 年均运营成本(OPEX) + 年均折旧
+ *   含残值年均净收益 = 年均收入 − 全生命周期年均成本
+ *   N年累计净收益 = 含残值年均净收益 × 折旧年限
+ * ============================================================ */
+
+// 残值率默认值(%)：能源类型取自 Excel「按5年/按8年折旧-考虑残值」两表；
+// 品牌维度 Excel 未填列，按纯电车型处置口径给出可调参考值。
+const R_RATE_DEFAULT = {
+  energy: {
+    '5': { fuel: 30, gas: 25, swap: 20, charge: 15 },
+    '8': { fuel: 20, gas: 18, swap: 15, charge: 10 }
+  },
+  brand: {
+    '5': { xm: 16, ly: 15, jf: 13, sq: 13, zq: 12, bj: 12 },
+    '8': { xm: 11, ly: 10, jf: 9,  sq: 9,  zq: 8,  bj: 8 }
+  }
+};
+
+// 购车成本默认值(万元，头+挂列车初始购置成本)
+const R_COST_DEFAULT = {
+  energy: {
+    '4x2': { fuel: 29.4, gas: 39.3, swap: 27.3, charge: 48.3 },
+    '6x4': { fuel: 42.6, gas: 51.4, swap: 31.5, charge: 52.5 }
+  },
+  brand: {
+    '4x2': { xm: 47.3, ly: 47.3, jf: 52.5, sq: 52.5, zq: 50.4, bj: 50.4 },
+    '6x4': { xm: 50.4, ly: 50.4, jf: 55.7, sq: 55.7, zq: 54.6, bj: 54.6 }
+  }
+};
+
+const R_ENTITIES = {
+  energy: [
+    { key: 'fuel',   name: '燃油',   color: '#4a6fa5' },
+    { key: 'gas',    name: '天然气', color: '#3a9fd8' },
+    { key: 'swap',   name: '换电',   color: '#2b7cff' },
+    { key: 'charge', name: '充电',   color: '#00d4ff' }
+  ],
+  brand: [
+    { key: 'xm', name: '小满', color: '#00d4ff' },
+    { key: 'ly', name: '零一', color: '#00ff88' },
+    { key: 'jf', name: '解放', color: '#2b7cff' },
+    { key: 'sq', name: '陕汽', color: '#3a9fd8' },
+    { key: 'zq', name: '重汽', color: '#8a7cff' },
+    { key: 'bj', name: '北京', color: '#4a6fa5' }
+  ]
+};
+const R_BRAND_NAME = { xm:'小满', ly:'零一', jf:'解放', sq:'陕汽', zq:'重汽', bj:'北京' };
+
+let rDrive = '4x2', rDim = 'energy', rYears = 5;
+let rChartProfit = null, rChartTotal = null;
+
+const rCostState = JSON.parse(JSON.stringify(R_COST_DEFAULT));
+const rRateState = JSON.parse(JSON.stringify(R_RATE_DEFAULT));
+
+function rClone(o){ return JSON.parse(JSON.stringify(o)); }
+function rCostKey(k){ return 'rC_' + k; }
+function rRateKey(k){ return 'rRR_' + k; }
+
+function rSyncInputs() {
+  R_ENTITIES[rDim].forEach(en => {
+    rCostState[rDim][rDrive][en.key] = numVal(rCostKey(en.key));
+    rRateState[rDim][String(rYears)][en.key] = numVal(rRateKey(en.key));
+  });
+}
+
+function rRenderCostInputs() {
+  const defs = R_ENTITIES[rDim];
+  const box = $('rCostArea');
+  box.className = 'cost-inputs' + (rDim === 'brand' ? ' brands-3col' : '');
+  box.innerHTML = defs.map(en => `
+    <div class="cost-input-item">
+      <span class="name">${en.name}</span>
+      <div class="field">
+        <input type="number" id="${rCostKey(en.key)}" value="${rCostState[rDim][rDrive][en.key]}" step="0.1" min="1" max="200">
+        <span class="unit">万</span>
+      </div>
+    </div>`).join('');
+  box.querySelectorAll('input').forEach(inp => {
+    inp.addEventListener('input', () => { rSyncInputs(); rRender(); });
+  });
+}
+
+function rRenderRateInputs() {
+  const defs = R_ENTITIES[rDim];
+  $('rRateHint').textContent = rDim === 'brand'
+    ? `（按品牌 · ${rYears}年 · Excel未列示，参考值可调）`
+    : `（按能源类型 · ${rYears}年 · 参照Excel）`;
+  const box = $('rRateArea');
+  box.className = 'rr-grid' + (rDim === 'brand' ? ' brands' : '');
+  box.innerHTML = defs.map(en => `
+    <div class="rr-item">
+      <span class="nm">${en.name}</span>
+      <input type="number" class="rr-input" id="${rRateKey(en.key)}" value="${rRateState[rDim][String(rYears)][en.key]}" step="1" min="0" max="90">
+      <span class="unit">%</span>
+    </div>`).join('');
+  box.querySelectorAll('input').forEach(inp => {
+    inp.addEventListener('input', () => { rSyncInputs(); rRender(); });
+  });
+}
+
+function rMakeItem(meta, load, econ, energyPrice, fixedAnnual, cost, rrPct, years, mileage, price) {
+  const revenue    = load * price * mileage;                  // 年均收入(万元)
+  const energyCost = (econ / 100) * energyPrice * mileage;    // 年均能耗费(万元)
+  const opex       = energyCost + fixedAnnual;                // 年均运营成本合计(万元)
+  const rr         = rrPct / 100;
+  const residual   = cost * rr;                               // 期末残值(万元)
+  const depreciable= cost - residual;                         // 应折旧总额(万元)
+  const annualDep  = depreciable / years;                     // 年均折旧(万元/年)
+  const lifeCost   = opex + annualDep;                        // 全生命周期年均成本(万元/年)
+  const profitNoRR = revenue - opex;                          // 年均净收益(不含折旧)
+  const profitRR   = revenue - lifeCost;                      // 含残值年均净收益
+  const totalN     = profitRR * years;                        // N年累计净收益
+  const payback    = profitNoRR > 0 ? cost / profitNoRR : Infinity;
+  return { ...meta, load, econ, energyPrice, revenue, energyCost, opex,
+           cost, rr, residual, depreciable, annualDep, lifeCost,
+           profitNoRR, profitRR, totalN, payback };
+}
+
+function rGetItems() {
+  const mileage = numVal('rMileage');
+  const price   = numVal('rPrice');
+  const elec    = numVal('rElec');
+  const oc      = numVal('rOther');
+  const d = numVal('rDriver'), m = numVal('rMaint'), t = numVal('rTire');
+  const ins = numVal('rIns'), u = numVal('rUrea');
+  const weightLoss = numVal('rWeight'), econUser = numVal('rEcon');
+  const years = rYears;
+  const defs = R_ENTITIES[rDim];
+  const items = [];
+
+  if (rDim === 'energy') {
+    const cfg = CONFIG_ENERGY[rDrive];
+    const base = cfg.baseLoad;
+    const fc = {
+      fuel:   d + (m + 0.5) + t + (ins - 0.5) + u,
+      gas:    d + (m + 1.0) + t + (ins - 0.5),
+      swap:   d + m + t + ins + 5.4,
+      charge: d + m + t + ins
+    };
+    defs.forEach(en => {
+      const sub = cfg[en.key];
+      const isCharge = en.key === 'charge';
+      const load = isCharge ? base - weightLoss : base - sub.weight;
+      const econ = isCharge ? econUser : sub.econ;
+      const ep = en.key === 'fuel' ? FUEL_PRICE : en.key === 'gas' ? GAS_PRICE : elec;
+      items.push(rMakeItem(en, load, econ, ep, fc[en.key] + oc,
+        numVal(rCostKey(en.key)), numVal(rRateKey(en.key)), years, mileage, price));
+    });
+  } else {
+    const cfg = CONFIG_BRAND[rDrive];
+    const base = cfg.baseLoad;
+    const common = d + m + t + ins;
+    defs.forEach(br => {
+      const sub = cfg.brands.find(b => b.name === R_BRAND_NAME[br.key]);
+      const load = base - sub.weight;
+      items.push(rMakeItem(br, load, sub.econ, elec, common + oc,
+        numVal(rCostKey(br.key)), numVal(rRateKey(br.key)), years, mileage, price));
+    });
+  }
+  return items;
+}
+
+function rRenderTable(items) {
+  const y = rYears;
+  const head = `<tr>
+    <th>车型 / 品牌</th><th>购置成本</th><th>残值率</th><th>期末残值</th>
+    <th>应折旧总额</th><th>年均折旧</th><th>年均运营成本</th>
+    <th>全生命周期<br>年均成本</th><th>年均净收益<br>(不含折旧)</th>
+    <th>含残值<br>年均净收益</th><th>${y}年累计<br>净收益</th><th>静态回本<br>周期</th>
+  </tr>`;
+  const best = items.reduce((a,b) => b.totalN > a.totalN ? b : a, items[0]);
+  const rows = items.map(it => {
+    const pb = isFinite(it.payback) ? it.payback.toFixed(1) + '年' : '—';
+    const cls = it.key === best.key ? 'hi' : '';
+    return `<tr>
+      <td class="name-cell" style="color:${it.color}">${it.name}</td>
+      <td>${it.cost.toFixed(1)}</td>
+      <td>${(it.rr*100).toFixed(0)}%</td>
+      <td>${it.residual.toFixed(2)}</td>
+      <td>${it.depreciable.toFixed(2)}</td>
+      <td>${it.annualDep.toFixed(2)}</td>
+      <td>${it.opex.toFixed(2)}</td>
+      <td class="accent">${it.lifeCost.toFixed(2)}</td>
+      <td>${it.profitNoRR.toFixed(2)}</td>
+      <td class="accent">${it.profitRR.toFixed(2)}</td>
+      <td class="${cls}">${it.totalN.toFixed(1)}</td>
+      <td>${pb}</td>
+    </tr>`;
+  }).join('');
+  $('rDetailTable').innerHTML = `<table class="detail-table"><thead>${head}</thead><tbody>${rows}</tbody></table>`;
+  $('rTableNote').innerHTML = `单位：万元。回本周期 = 初始购置成本 ÷ 年均净收益（不含折旧）。<b>口径说明：</b>年均运营成本为 OPEX（能耗＋司机＋保养＋轮胎＋保险＋尿素＋杂费），不含折旧；全生命周期年均成本 = OPEX ＋ 年均折旧；含残值净收益已扣除折旧，资金利息未计入。`;
+  $('rProfitTitle').textContent = `📈 年均净收益对比（含/不含折旧 · ${y}年口径）`;
+  $('rTotalTitle').textContent  = `💰 ${y} 年累计净收益（含残值）`;
+  $('rTableTitle').textContent  = `🧾 全生命周期 TCO 明细（${rDim === 'energy' ? '按能源类型' : '按品牌'} · ${rDrive} · ${y}年）`;
+}
+
+function rRenderCharts(items) {
+  const names  = items.map(i => i.name);
+  const noRR   = items.map(i => +i.profitNoRR.toFixed(2));
+  const withRR = items.map(i => +i.profitRR.toFixed(2));
+  const totals = items.map(i => +i.totalN.toFixed(1));
+  const tipStyle = { trigger:'axis', backgroundColor:'rgba(10,22,40,0.9)', borderColor:'rgba(0,212,255,0.3)', textStyle:{ color:'#e8f0ff' } };
+
+  const elP = $('rChartProfit');
+  if (!rChartProfit) rChartProfit = echarts.init(elP);
+  rChartProfit.setOption({
+    backgroundColor: 'transparent',
+    tooltip: { ...tipStyle, formatter: p => p[0].name + '<br/>' + p.map(x => x.marker + x.seriesName + '：' + x.value.toFixed(2) + ' 万元/年').join('<br/>') },
+    legend: { data:['年均净收益(不含折旧)','含残值年均净收益'], textStyle:{ color:'#8aa5cc' }, top:0 },
+    grid: { left:'10%', right:'4%', bottom:'20%', top:'18%', containLabel:true },
+    xAxis: { type:'category', data:names, axisLabel:{ fontWeight:'bold', fontSize:13, color:'#a8c0e0', margin:12 }, axisLine:{ lineStyle:{ color:'rgba(255,255,255,0.15)' } } },
+    yAxis: { type:'value', name:'万元/年', nameTextStyle:{ color:'#8aa5cc' }, axisLabel:{ color:'#8aa5cc' }, splitLine:{ lineStyle:{ color:'rgba(255,255,255,0.06)' } } },
+    series: [
+      { name:'年均净收益(不含折旧)', type:'bar', barWidth:'28%',
+        data: noRR.map(v => ({ value:v, itemStyle:{ color:'rgba(138,165,204,0.55)', borderRadius:[5,5,0,0] } })),
+        label:{ show:true, position:'top', formatter:p=>p.value.toFixed(1), fontSize:11, color:'#a8c0e0' } },
+      { name:'含残值年均净收益', type:'bar', barWidth:'28%',
+        data: withRR.map((v,i) => ({ value:v, itemStyle:{ color:new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:items[i].color},{offset:1,color:'rgba(0,128,192,0.8)'}]), borderRadius:[5,5,0,0], shadowColor:items[i].color, shadowBlur:10 } })),
+        label:{ show:true, position:'top', formatter:p=>p.value.toFixed(1), fontSize:12, color:'#fff', fontWeight:'bold' } }
+    ]
+  }, true);
+
+  const elT = $('rChartTotal');
+  if (!rChartTotal) rChartTotal = echarts.init(elT);
+  rChartTotal.setOption({
+    backgroundColor: 'transparent',
+    tooltip: { ...tipStyle, formatter: p => p[0].name + '<br/>' + p[0].value.toFixed(1) + ' 万元' },
+    grid: { left:'10%', right:'4%', bottom:'22%', top:'15%', containLabel:true },
+    xAxis: { type:'category', data:names, axisLabel:{ fontWeight:'bold', fontSize:12, color:'#a8c0e0', margin:12 }, axisLine:{ lineStyle:{ color:'rgba(255,255,255,0.15)' } } },
+    yAxis: { type:'value', name:'万元', nameTextStyle:{ color:'#8aa5cc' }, axisLabel:{ color:'#8aa5cc' }, splitLine:{ lineStyle:{ color:'rgba(255,255,255,0.06)' } } },
+    series: [{ type:'bar', barWidth:'50%',
+      data: totals.map((v,i) => ({ value:v, itemStyle:{ color:new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:items[i].color},{offset:1,color:'rgba(0,128,192,0.7)'}]), borderRadius:[6,6,0,0], shadowColor:items[i].color, shadowBlur:12 } })),
+      label:{ show:true, position:'top', formatter:p=>p.value.toFixed(0)+'万', fontSize:14, color:'#fff', fontWeight:'bold' } }]
+  }, true);
+}
+
+function rUpdateLabels() {
+  $('rMileageVal').textContent = numVal('rMileage').toFixed(1) + ' 万公里';
+  $('rPriceVal').textContent   = numVal('rPrice').toFixed(3) + ' 元';
+  $('rWeightVal').textContent  = numVal('rWeight').toFixed(1) + ' 吨';
+  $('rEconVal').textContent    = numVal('rEcon').toFixed(0) + ' kWh';
+  $('rElecVal').textContent    = numVal('rElec').toFixed(2) + ' 元/度';
+  $('rDriverVal').textContent = numVal('rDriver').toFixed(1) + '万';
+  $('rMaintVal').textContent  = numVal('rMaint').toFixed(2) + '万';
+  $('rTireVal').textContent   = numVal('rTire').toFixed(2) + '万';
+  $('rInsVal').textContent    = numVal('rIns').toFixed(2) + '万';
+  $('rUreaVal').textContent   = numVal('rUrea').toFixed(2) + '万';
+  $('rOtherVal').textContent  = numVal('rOther').toFixed(2) + '万';
+}
+
+function rRender() {
+  rUpdateLabels();
+  const items = rGetItems();
+  rRenderTable(items);
+  rRenderCharts(items);
+}
+
+function rSetSeg(activeBtn, groupBtns) {
+  groupBtns.forEach(b => b.classList.remove('active'));
+  activeBtn.classList.add('active');
+}
+
+function rBind() {
+  const sliderIds = ['rMileage','rPrice','rWeight','rEcon','rElec','rOther','rDriver','rMaint','rTire','rIns','rUrea'];
+  sliderIds.forEach(id => $(id).addEventListener('input', rRender));
+
+  $('rDimEnergy').addEventListener('click', () => {
+    if (rDim === 'energy') return;
+    rSyncInputs(); rDim = 'energy';
+    rSetSeg($('rDimEnergy'), [$('rDimEnergy'), $('rDimBrand')]);
+    rRenderCostInputs(); rRenderRateInputs(); rRender();
+  });
+  $('rDimBrand').addEventListener('click', () => {
+    if (rDim === 'brand') return;
+    rSyncInputs(); rDim = 'brand';
+    rSetSeg($('rDimBrand'), [$('rDimEnergy'), $('rDimBrand')]);
+    rRenderCostInputs(); rRenderRateInputs(); rRender();
+  });
+
+  const setYear = (y, btn, otherBtn) => {
+    if (rYears === y) return;
+    rSyncInputs(); rYears = y;
+    rSetSeg(btn, [btn, otherBtn]);
+    rRenderRateInputs(); rRender();
+  };
+  $('rYear5').addEventListener('click', () => setYear(5, $('rYear5'), $('rYear8')));
+  $('rYear8').addEventListener('click', () => setYear(8, $('rYear8'), $('rYear5')));
+
+  const setDrive = (dv, btn, otherBtn) => {
+    if (rDrive === dv) return;
+    rSyncInputs(); rDrive = dv;
+    rSetSeg(btn, [btn, otherBtn]);
+    rRenderCostInputs(); rRender();
+  };
+  $('rBtn4x2').addEventListener('click', () => setDrive('4x2', $('rBtn4x2'), $('rBtn6x4')));
+  $('rBtn6x4').addEventListener('click', () => setDrive('6x4', $('rBtn6x4'), $('rBtn4x2')));
+
+  $('rResetCost').addEventListener('click', () => {
+    rCostState[rDim][rDrive] = rClone(R_COST_DEFAULT[rDim][rDrive]);
+    rRenderCostInputs(); rRender();
+  });
+  $('rResetRate').addEventListener('click', () => {
+    rRateState[rDim][String(rYears)] = rClone(R_RATE_DEFAULT[rDim][String(rYears)]);
+    rRenderRateInputs(); rRender();
+  });
+  $('rResetFee').addEventListener('click', () => {
+    $('rDriver').value = 12; $('rMaint').value = 0.5; $('rTire').value = 3;
+    $('rIns').value = 2.5; $('rUrea').value = 0.5; $('rOther').value = 0.1;
+    rRender();
+  });
+
+  window.addEventListener('resize', () => {
+    rChartProfit && rChartProfit.resize();
+    rChartTotal && rChartTotal.resize();
+  });
+}
+
+rBind(); rRenderCostInputs(); rRenderRateInputs();
+setTimeout(() => { rRender(); }, 200);
 </script>
 </body>
 </html>
