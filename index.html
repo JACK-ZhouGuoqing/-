@@ -821,7 +821,7 @@ const CONFIG_ENERGY = {
     baseLoad: 27,
     fuel:   { econ: 25,  weight: 0.0 },
     gas:    { econ: 23,  weight: 0.6 },
-    swap:   { econ: 120, weight: 2.2 },
+    swap:   { econ: 120, weight: 2.0 },
     charge: { econ: 120, weight: 1.8 }
   },
   '6x4': {
@@ -1114,7 +1114,7 @@ setTimeout(() => { eRender(); }, 100);
  * ============================================================ */
 const CONFIG_BRAND = {
   '4x2': {
-    baseLoad: 27, fuelEcon: 25, fuelCost: 30,
+    baseLoad: 27, fuelEcon: 25, fuelCost: 29.4,
     brands: [
       { name: '小满', econ: 90,  weight: 2.0, costKey: 'bCostXm', defaultCost: 47.3 },
       { name: '零一', econ: 100, weight: 2.2, costKey: 'bCostLy', defaultCost: 47.3 },
@@ -1125,7 +1125,7 @@ const CONFIG_BRAND = {
     ]
   },
   '6x4': {
-    baseLoad: 31.4, fuelEcon: 35, fuelCost: 42,
+    baseLoad: 31.4, fuelEcon: 35, fuelCost: 42.6,
     brands: [
       { name: '小满', econ: 90,  weight: 2.0, costKey: 'bCostXm', defaultCost: 50.4 },
       { name: '零一', econ: 110, weight: 2.2, costKey: 'bCostLy', defaultCost: 50.4 },
@@ -1135,6 +1135,13 @@ const CONFIG_BRAND = {
       { name: '北京', econ: 110, weight: 3.0, costKey: 'bCostBj', defaultCost: 54.6 }
     ]
   }
+};
+
+// 品牌对比页滑块基准值：自重/电耗滑块作为"相对各车型 Excel 基准的整体偏移"，
+// 默认位置(4x2=1.8/120, 6x4=2.0/130)时偏移为 0，结果与 Excel 表2/表3 完全一致。
+const BRAND_SLIDER_BASE = {
+  '4x2': { weight: 1.8, econ: 120 },
+  '6x4': { weight: 2.0, econ: 130 }
 };
 
 let bDrive = '4x2';
@@ -1185,16 +1192,22 @@ function bCalc() {
   const ins = numVal('bIns');
   const u = numVal('bUrea');
 
+  // 滑块作为"相对基准的整体偏移"，保留各品牌 Excel 参数的相对差异
+  const baseRef = BRAND_SLIDER_BASE[bDrive];
+  const weightDelta = weightLoss - baseRef.weight;   // 自重损耗偏移（+为更重）
+  const econDelta = numVal('bEcon') - baseRef.econ;  // 电耗偏移（+为更耗电）
+
   const commonElec = d + m + t + ins;
   const fuelFC = d + (m + 0.5) + t + (ins - 0.5) + u;
 
   const brandProfits = cfg.brands.map(br => {
-    const load = base - br.weight;
-    const p = calcProfit(load, price, mileage, br.econ, elec, commonElec + oc);
+    const load = Math.max(0, base - (br.weight + weightDelta));
+    const econ = Math.max(0, br.econ + econDelta);
+    const p = calcProfit(load, price, mileage, econ, elec, commonElec + oc);
     return { name: br.name, profit: p, cost: numVal(br.costKey), load: load };
   });
 
-  const fuelP = calcProfit(base - 0, price, mileage, cfg.fuelEcon, FUEL_PRICE, fuelFC + oc);
+  const fuelP = calcProfit(Math.max(0, base - weightDelta), price, mileage, cfg.fuelEcon, FUEL_PRICE, fuelFC + oc);
   const fuelCost = cfg.fuelCost;
 
   const analyses = brandProfits.map(b => analyzePayback(b.cost, fuelCost, b.profit, fuelP));
@@ -1223,9 +1236,14 @@ function bUpdateMarginal() {
   const ins = numVal('bIns');
   const commonElec = d + m + t + ins;
 
+  const baseRef = BRAND_SLIDER_BASE[bDrive];
+  const weightDelta = numVal('bWeight') - baseRef.weight;
+  const econDelta = numVal('bEcon') - baseRef.econ;
+
   const brandObj = cfg.brands.find(b => b.name === bMcBrand) || cfg.brands[0];
-  const load = base - brandObj.weight;
-  const cP = calcProfit(load, price, mileage, brandObj.econ, elec, commonElec + oc);
+  const load = Math.max(0, base - (brandObj.weight + weightDelta));
+  const econ = Math.max(0, brandObj.econ + econDelta);
+  const cP = calcProfit(load, price, mileage, econ, elec, commonElec + oc);
 
   const el = $('bMarginal');
   if (cP <= 0.01) {
@@ -1235,11 +1253,11 @@ function bUpdateMarginal() {
 
   const dPrice = load * 0.01 * mileage;
   const pPrice = (dPrice / cP) * 100;
-  const dMile = load * price - (brandObj.econ / 100) * elec;
+  const dMile = load * price - (econ / 100) * elec;
   const pMile = (dMile / cP) * 100;
   const dWeight = price * mileage;
   const pWeight = (dWeight / cP) * 100;
-  const dElec = (brandObj.econ / 100) * 0.1 * mileage;
+  const dElec = (econ / 100) * 0.1 * mileage;
   const pElec = (dElec / cP) * 100;
 
   el.innerHTML =
@@ -1577,10 +1595,15 @@ function rGetItems() {
     const cfg = CONFIG_BRAND[rDrive];
     const base = cfg.baseLoad;
     const common = d + m + t + ins;
+    // 自重/电耗滑块作为相对基准的整体偏移，与第2页口径一致
+    const baseRef = BRAND_SLIDER_BASE[rDrive];
+    const weightDelta = weightLoss - baseRef.weight;
+    const econDelta = econUser - baseRef.econ;
     defs.forEach(br => {
       const sub = cfg.brands.find(b => b.name === R_BRAND_NAME[br.key]);
-      const load = base - sub.weight;
-      items.push(rMakeItem(br, load, sub.econ, elec, common + oc,
+      const load = Math.max(0, base - (sub.weight + weightDelta));
+      const econ = Math.max(0, sub.econ + econDelta);
+      items.push(rMakeItem(br, load, econ, elec, common + oc,
         numVal(rCostKey(br.key)), numVal(rRateKey(br.key)), years, mileage, price));
     });
   }
